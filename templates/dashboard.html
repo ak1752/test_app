@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revenue Analysis Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f3f4f6;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            padding: 20px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+        
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+        
+        .main-container {
+            display: flex;
+            min-height: calc(100vh - 72px);
+        }
+        
+        .sidebar {
+            width: 280px;
+            background: white;
+            padding: 24px;
+            border-right: 1px solid #e5e7eb;
+            overflow-y: auto;
+            max-height: calc(100vh - 72px);
+        }
+        
+        .sidebar h2 {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6b7280;
+            margin-bottom: 20px;
+        }
+        
+        .filter-group {
+            margin-bottom: 20px;
+        }
+        
+        .filter-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 6px;
+        }
+        
+        .filter-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .filter-group select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .multi-select {
+            position: relative;
+        }
+        
+        .multi-select-btn {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .multi-select-btn:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+        
+        .multi-select-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+        }
+        
+        .multi-select-dropdown.show {
+            display: block;
+        }
+        
+        .multi-select-option {
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        
+        .multi-select-option:hover {
+            background: #f3f4f6;
+        }
+        
+        .multi-select-option input {
+            cursor: pointer;
+        }
+        
+        .select-all {
+            border-bottom: 1px solid #e5e7eb;
+            font-weight: 500;
+        }
+        
+        .content {
+            flex: 1;
+            padding: 24px 32px;
+            overflow-y: auto;
+            max-height: calc(100vh - 72px);
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .metric-label {
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+        
+        .metric-value {
+            font-size: 28px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        
+        .metric-value.percentage {
+            color: #059669;
+        }
+        
+        .metric-value.negative {
+            color: #dc2626;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 16px;
+        }
+        
+        .data-table-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .table-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .table-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .row-count {
+            font-size: 14px;
+            color: #6b7280;
+        }
+        
+        .table-scroll {
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        
+        th {
+            background: #f9fafb;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 500;
+            color: #374151;
+            border-bottom: 1px solid #e5e7eb;
+            position: sticky;
+            top: 0;
+        }
+        
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f3f4f6;
+            color: #4b5563;
+        }
+        
+        tr:hover td {
+            background: #f9fafb;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .loading-overlay.show {
+            display: flex;
+        }
+        
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #e5e7eb;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .metric-section {
+            margin-bottom: 24px;
+        }
+        
+        .metric-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>Revenue Analysis Dashboard</h1>
+        <div class="header-actions">
+            <button class="btn btn-secondary" onclick="resetFilters()">Reset Filters</button>
+            <a href="/" class="btn btn-primary">Upload New File</a>
+        </div>
+    </header>
+    
+    <div class="main-container">
+        <aside class="sidebar">
+            <h2>Filters</h2>
+            
+            <div class="filter-group">
+                <label>Channel</label>
+                <div class="multi-select" data-filter="channels">
+                    <button class="multi-select-btn" type="button">
+                        <span>All Selected</span>
+                        <span>▼</span>
+                    </button>
+                    <div class="multi-select-dropdown">
+                        <label class="multi-select-option select-all">
+                            <input type="checkbox" checked> Select All
+                        </label>
+                        {% for item in filters.channels %}
+                        <label class="multi-select-option">
+                            <input type="checkbox" value="{{ item }}" checked> {{ item }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filter-group">
+                <label>CET</label>
+                <div class="multi-select" data-filter="cets">
+                    <button class="multi-select-btn" type="button">
+                        <span>All Selected</span>
+                        <span>▼</span>
+                    </button>
+                    <div class="multi-select-dropdown">
+                        <label class="multi-select-option select-all">
+                            <input type="checkbox" checked> Select All
+                        </label>
+                        {% for item in filters.cets %}
+                        <label class="multi-select-option">
+                            <input type="checkbox" value="{{ item }}" checked> {{ item }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filter-group">
+                <label>NAM IV</label>
+                <div class="multi-select" data-filter="nam_ivs">
+                    <button class="multi-select-btn" type="button">
+                        <span>All Selected</span>
+                        <span>▼</span>
+                    </button>
+                    <div class="multi-select-dropdown">
+                        <label class="multi-select-option select-all">
+                            <input type="checkbox" checked> Select All
+                        </label>
+                        {% for item in filters.nam_ivs %}
+                        <label class="multi-select-option">
+                            <input type="checkbox" value="{{ item }}" checked> {{ item }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filter-group">
+                <label>Segment</label>
+                <div class="multi-select" data-filter="segments">
+                    <button class="multi-select-btn" type="button">
+                        <span>All Selected</span>
+                        <span>▼</span>
+                    </button>
+                    <div class="multi-select-dropdown">
+                        <label class="multi-select-option select-all">
+                            <input type="checkbox" checked> Select All
+                        </label>
+                        {% for item in filters.segments %}
+                        <label class="multi-select-option">
+                            <input type="checkbox" value="{{ item }}" checked> {{ item }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filter-group">
+                <label>GTM Tactic</label>
+                <div class="multi-select" data-filter="gtm_tactics">
+                    <button class="multi-select-btn" type="button">
+                        <span>All Selected</span>
+                        <span>▼</span>
+                    </button>
+                    <div class="multi-select-dropdown">
+                        <label class="multi-select-option select-all">
+                            <input type="checkbox" checked> Select All
+                        </label>
+                        {% for item in filters.gtm_tactics %}
+                        <label class="multi-select-option">
+                            <input type="checkbox" value="{{ item }}" checked> {{ item }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filter-group">
+                <label>Close Quarter</label>
+                <div class="multi-select" data-filter="close_quarters">
+                    <button class="multi-select-btn" type="button">
+                        <span>All Selected</span>
+                        <span>▼</span>
+                    </button>
+                    <div class="multi-select-dropdown">
+                        <label class="multi-select-option select-all">
+                            <input type="checkbox" checked> Select All
+                        </label>
+                        {% for item in filters.close_quarters %}
+                        <label class="multi-select-option">
+                            <input type="checkbox" value="{{ item }}" checked> {{ item }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filter-group">
+                <label>Close Half</label>
+                <div class="multi-select" data-filter="close_halves">
+                    <button class="multi-select-btn" type="button">
+                        <span>All Selected</span>
+                        <span>▼</span>
+                    </button>
+                    <div class="multi-select-dropdown">
+                        <label class="multi-select-option select-all">
+                            <input type="checkbox" checked> Select All
+                        </label>
+                        {% for item in filters.close_halves %}
+                        <label class="multi-select-option">
+                            <input type="checkbox" value="{{ item }}" checked> {{ item }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </aside>
+        
+        <main class="content">
+            <div class="metric-section">
+                <div class="metric-section-title">Summary</div>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-label">ACV</div>
+                        <div class="metric-value" id="metric-acv">-</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Total Bookings</div>
+                        <div class="metric-value" id="metric-total_bookings">-</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Total Bookings excl. Ungrowth</div>
+                        <div class="metric-value" id="metric-total_bookings_excl_ungrowth">-</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Total Expected Bookings</div>
+                        <div class="metric-value" id="metric-total_expected_bookings">-</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Total Expected Bookings excl. Ungrowth</div>
+                        <div class="metric-value" id="metric-total_expected_bookings_excl_ungrowth">-</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="metric-section">
+                <div class="metric-section-title">Cloud Metrics</div>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-label">Cloud Bookings</div>
+                        <div class="metric-value" id="metric-cloud_bookings">-</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Cloud Bookings excl. Ungrowth</div>
+                        <div class="metric-value" id="metric-cloud_bookings_excl_ungrowth">-</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Cloud Bookings %</div>
+                        <div class="metric-value percentage" id="metric-cloud_bookings_percentage">-</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Cloud Expected Bookings</div>
+                        <div class="metric-value" id="metric-cloud_expected_bookings">-</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Cloud Expected Bookings %</div>
+                        <div class="metric-value percentage" id="metric-cloud_expected_bookings_percentage">-</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="metric-section">
+                <div class="metric-section-title">Rental & Ungrowth</div>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-label">Rental %</div>
+                        <div class="metric-value percentage" id="metric-rental_percentage">-</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Rental % excl. Ungrowth</div>
+                        <div class="metric-value percentage" id="metric-rental_percentage_excl_ungrowth">-</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Total Ungrowth</div>
+                        <div class="metric-value negative" id="metric-total_ungrowth">-</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Cloud Ungrowth</div>
+                        <div class="metric-value negative" id="metric-cloud_ungrowth">-</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">On Prem Ungrowth</div>
+                        <div class="metric-value negative" id="metric-on_prem_ungrowth">-</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="data-table-container">
+                <div class="table-header">
+                    <h3>Filtered Data</h3>
+                    <span class="row-count" id="rowCount">0 rows</span>
+                </div>
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Channel</th>
+                                <th>CET</th>
+                                <th>Close Quarter</th>
+                                <th>Close Half</th>
+                                <th>Forecast</th>
+                                <th>Bookings</th>
+                                <th>Expected Bookings</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+    
+    <script>
+        // Multi-select dropdown functionality
+        document.querySelectorAll('.multi-select').forEach(select => {
+            const btn = select.querySelector('.multi-select-btn');
+            const dropdown = select.querySelector('.multi-select-dropdown');
+            const selectAllCheckbox = dropdown.querySelector('.select-all input');
+            const optionCheckboxes = dropdown.querySelectorAll('.multi-select-option:not(.select-all) input');
+            
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.querySelectorAll('.multi-select-dropdown.show').forEach(d => {
+                    if (d !== dropdown) d.classList.remove('show');
+                });
+                dropdown.classList.toggle('show');
+            });
+            
+            selectAllCheckbox.addEventListener('change', () => {
+                optionCheckboxes.forEach(cb => cb.checked = selectAllCheckbox.checked);
+                updateButtonText(select);
+                fetchData();
+            });
+            
+            optionCheckboxes.forEach(cb => {
+                cb.addEventListener('change', () => {
+                    const allChecked = Array.from(optionCheckboxes).every(c => c.checked);
+                    const noneChecked = Array.from(optionCheckboxes).every(c => !c.checked);
+                    selectAllCheckbox.checked = allChecked;
+                    selectAllCheckbox.indeterminate = !allChecked && !noneChecked;
+                    updateButtonText(select);
+                    fetchData();
+                });
+            });
+        });
+        
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.multi-select-dropdown.show').forEach(d => d.classList.remove('show'));
+        });
+        
+        function updateButtonText(select) {
+            const btn = select.querySelector('.multi-select-btn span:first-child');
+            const checkboxes = select.querySelectorAll('.multi-select-option:not(.select-all) input');
+            const checked = Array.from(checkboxes).filter(cb => cb.checked);
+            
+            if (checked.length === 0) {
+                btn.textContent = 'None Selected';
+            } else if (checked.length === checkboxes.length) {
+                btn.textContent = 'All Selected';
+            } else if (checked.length <= 2) {
+                btn.textContent = checked.map(cb => cb.value).join(', ');
+            } else {
+                btn.textContent = `${checked.length} selected`;
+            }
+        }
+        
+        function getSelectedFilters() {
+            const filters = {};
+            document.querySelectorAll('.multi-select').forEach(select => {
+                const filterName = select.dataset.filter;
+                const checkboxes = select.querySelectorAll('.multi-select-option:not(.select-all) input:checked');
+                filters[filterName] = Array.from(checkboxes).map(cb => cb.value);
+            });
+            return filters;
+        }
+        
+        function formatNumber(num) {
+            if (num === null || num === undefined) return '-';
+            return new Intl.NumberFormat('en-US', { 
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: 2 
+            }).format(num);
+        }
+        
+        function formatPercent(num) {
+            if (num === null || num === undefined) return '-';
+            return num.toFixed(2) + '%';
+        }
+        
+        async function fetchData() {
+            const loading = document.getElementById('loadingOverlay');
+            loading.classList.add('show');
+            
+            try {
+                const response = await fetch('/api/data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(getSelectedFilters())
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    alert(data.error);
+                    window.location.href = '/';
+                    return;
+                }
+                
+                // Update metrics
+                const metrics = data.metrics;
+                document.getElementById('metric-acv').textContent = formatNumber(metrics.acv);
+                document.getElementById('metric-total_bookings').textContent = formatNumber(metrics.total_bookings);
+                document.getElementById('metric-total_bookings_excl_ungrowth').textContent = formatNumber(metrics.total_bookings_excl_ungrowth);
+                document.getElementById('metric-total_expected_bookings').textContent = formatNumber(metrics.total_expected_bookings);
+                document.getElementById('metric-total_expected_bookings_excl_ungrowth').textContent = formatNumber(metrics.total_expected_bookings_excl_ungrowth);
+                document.getElementById('metric-cloud_bookings').textContent = formatNumber(metrics.cloud_bookings);
+                document.getElementById('metric-cloud_bookings_excl_ungrowth').textContent = formatNumber(metrics.cloud_bookings_excl_ungrowth);
+                document.getElementById('metric-cloud_bookings_percentage').textContent = formatPercent(metrics.cloud_bookings_percentage);
+                document.getElementById('metric-cloud_expected_bookings').textContent = formatNumber(metrics.cloud_expected_bookings);
+                document.getElementById('metric-cloud_expected_bookings_percentage').textContent = formatPercent(metrics.cloud_expected_bookings_percentage);
+                document.getElementById('metric-rental_percentage').textContent = formatPercent(metrics.rental_percentage);
+                document.getElementById('metric-rental_percentage_excl_ungrowth').textContent = formatPercent(metrics.rental_percentage_excl_ungrowth);
+                document.getElementById('metric-total_ungrowth').textContent = formatNumber(metrics.total_ungrowth);
+                document.getElementById('metric-cloud_ungrowth').textContent = formatNumber(metrics.cloud_ungrowth);
+                document.getElementById('metric-on_prem_ungrowth').textContent = formatNumber(metrics.on_prem_ungrowth);
+                
+                // Update table
+                const tbody = document.getElementById('dataTableBody');
+                tbody.innerHTML = data.table_data.map(row => `
+                    <tr>
+                        <td>${row.Customer || ''}</td>
+                        <td>${row.Channel || ''}</td>
+                        <td>${row.CET || ''}</td>
+                        <td>${row['Close Quarter'] || ''}</td>
+                        <td>${row['Close Half'] || ''}</td>
+                        <td>${row.Forecast || ''}</td>
+                        <td>${formatNumber(row.Bookings)}</td>
+                        <td>${formatNumber(row['Expected Bookings'])}</td>
+                    </tr>
+                `).join('');
+                
+                document.getElementById('rowCount').textContent = `${data.row_count} rows`;
+                
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            } finally {
+                loading.classList.remove('show');
+            }
+        }
+        
+        function resetFilters() {
+            document.querySelectorAll('.multi-select').forEach(select => {
+                const selectAllCheckbox = select.querySelector('.select-all input');
+                const optionCheckboxes = select.querySelectorAll('.multi-select-option:not(.select-all) input');
+                selectAllCheckbox.checked = true;
+                selectAllCheckbox.indeterminate = false;
+                optionCheckboxes.forEach(cb => cb.checked = true);
+                updateButtonText(select);
+            });
+            fetchData();
+        }
+        
+        // Initial data fetch
+        fetchData();
+    </script>
+</body>
+</html>
